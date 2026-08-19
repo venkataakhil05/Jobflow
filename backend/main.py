@@ -62,7 +62,9 @@ async def ingest(
 
     result = save_jobs(
         db,
-        ingestion_result["jobs"]
+        ingestion_result["jobs"],
+        ingestion_result["source"],
+        ingestion_result["fallback_used"]
     )
 
     return {
