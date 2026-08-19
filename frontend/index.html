@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="description"
+        content="JobFlow — resilient job ingestion and monitoring platform."
+    >
+
+    <title>JobFlow — Ingestion Command Center</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Ambient background -->
+
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="noise"></div>
+
+
+    <!-- Navigation -->
+
+    <header class="topbar">
+
+        <div class="brand">
+            <div class="brand-mark">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div>
+                <div class="brand-name">JOBFLOW</div>
+                <div class="brand-subtitle">
+                    INGESTION COMMAND CENTER
+                </div>
+            </div>
+        </div>
+
+        <div class="topbar-status">
+            <span class="live-dot"></span>
+            <span id="topStatus">SYSTEM ONLINE</span>
+        </div>
+
+    </header>
+
+
+    <main class="page">
+
+
+        <!-- HERO -->
+
+        <section class="hero">
+
+            <div class="hero-copy">
+
+                <div class="eyebrow">
+                    <span></span>
+                    RESILIENT DATA PIPELINE
+                </div>
+
+                <h1>
+                    Jobs in.
+                    <br>
+                    <span class="gradient-text">Signal out.</span>
+                </h1>
+
+                <p class="hero-description">
+                    A resilient ingestion system that collects,
+                    validates, deduplicates and persists real job
+                    listings — even when the primary source fails.
+                </p>
+
+                <div class="hero-actions">
+
+                    <button
+                        id="ingestBtn"
+                        class="primary-button"
+                        onclick="runIngestion()"
+                    >
+                        <span class="button-icon">↯</span>
+                        Ingest Jobs
+                    </button>
+
+                    <button
+                        id="fallbackBtn"
+                        class="secondary-button"
+                        onclick="testFallback()"
+                    >
+                        <span>◇</span>
+                        Test Fallback
+                    </button>
+
+                </div>
+
+                <div class="hero-meta">
+
+                    <div>
+                        <span class="meta-label">PRIMARY</span>
+                        <strong id="heroPrimary">JOBICY</strong>
+                    </div>
+
+                    <div class="meta-divider"></div>
+
+                    <div>
+                        <span class="meta-label">FALLBACK</span>
+                        <strong>REMOTIVE</strong>
+                    </div>
+
+                    <div class="meta-divider"></div>
+
+                    <div>
+                        <span class="meta-label">STATUS</span>
+                        <strong class="green" id="heroHealth">
+                            OPERATIONAL
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Pipeline visualization -->
+
+            <div class="pipeline-scene">
+
+                <div class="scene-label">
+                    LIVE INGESTION FLOW
+                </div>
+
+                <div class="pipeline">
+
+                    <div class="pipeline-line line-1"></div>
+                    <div class="pipeline-line line-2"></div>
+                    <div class="pipeline-line line-3"></div>
+                    <div class="pipeline-line line-4"></div>
+
+                    <div class="data-particle particle-1"></div>
+                    <div class="data-particle particle-2"></div>
+                    <div class="data-particle particle-3"></div>
+
+                    <div class="pipeline-node node-primary">
+
+                        <div class="node-ring">
+                            <div class="node-icon">↗</div>
+                        </div>
+
+                        <div class="node-content">
+                            <span>SOURCE</span>
+                            <strong>JOBICY</strong>
+                        </div>
+
+                    </div>
+
+
+                    <div class="pipeline-node node-ingest">
+
+                        <div class="node-ring">
+                            <div class="node-icon">↓</div>
+                        </div>
+
+                        <div class="node-content">
+                            <span>INGEST</span>
+                            <strong>COLLECT</strong>
+                        </div>
+
+                    </div>
+
+
+                    <div class="pipeline-node node-process">
+
+                        <div class="node-ring">
+                            <div class="node-icon">✦</div>
+                        </div>
+
+                        <div class="node-content">
+                            <span>PROCESS</span>
+                            <strong>VALIDATE</strong>
+                        </div>
+
+                    </div>
+
+
+                    <div class="pipeline-node node-store">
+
+                        <div class="node-ring">
+                            <div class="node-icon">▣</div>
+                        </div>
+
+                        <div class="node-content">
+                            <span>STORAGE</span>
+                            <strong>SQLITE</strong>
+                        </div>
+
+                    </div>
+
+
+                    <div class="fallback-path">
+
+                        <div class="fallback-label">
+                            FAILSAFE
+                        </div>
+
+                        <div class="fallback-node">
+                            <span>◇</span>
+                            <strong>REMOTIVE</strong>
+                            <small>FALLBACK</small>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="scene-footer">
+                    <span class="pulse-dot"></span>
+                    PIPELINE READY
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- SYSTEM OVERVIEW -->
+
+        <section class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-kicker">01 / SYSTEM</div>
+                    <h2>System Overview</h2>
+                </div>
+
+                <div class="last-run">
+                    LAST RUN
+                    <strong id="lastRun">—</strong>
+                </div>
+
+            </div>
+
+
+            <div class="metric-grid">
+
+                <article class="metric-card">
+
+                    <div class="metric-top">
+                        <span class="metric-label">
+                            API STATUS
+                        </span>
+
+                        <span
+                            class="status-orb"
+                            id="apiOrb"
+                        ></span>
+                    </div>
+
+                    <div
+                        class="metric-value"
+                        id="apiStatus"
+                    >
+                        CHECKING
+                    </div>
+
+                    <div class="metric-caption">
+                        FastAPI service
+                    </div>
+
+                </article>
+
+
+                <article class="metric-card">
+
+                    <div class="metric-top">
+                        <span class="metric-label">
+                            PRIMARY SOURCE
+                        </span>
+
+                        <span class="metric-symbol">
+                            ↗
+                        </span>
+                    </div>
+
+                    <div
+                        class="metric-value small"
+                        id="primarySource"
+                    >
+                        —
+                    </div>
+
+                    <div class="metric-caption">
+                        Active ingestion source
+                    </div>
+
+                </article>
+
+
+                <article class="metric-card">
+
+                    <div class="metric-top">
+                        <span class="metric-label">
+                            FALLBACK
+                        </span>
+
+                        <span class="metric-symbol">
+                            ◇
+                        </span>
+                    </div>
+
+                    <div
+                        class="metric-value small"
+                        id="fallbackStatus"
+                    >
+                        —
+                    </div>
+
+                    <div class="metric-caption">
+                        Automatic recovery
+                    </div>
+
+                </article>
+
+
+                <article class="metric-card">
+
+                    <div class="metric-top">
+                        <span class="metric-label">
+                            RETRY POLICY
+                        </span>
+
+                        <span class="metric-symbol">
+                            ↻
+                        </span>
+                    </div>
+
+                    <div class="metric-value">
+                        3×
+                    </div>
+
+                    <div class="metric-caption">
+                        Resilience attempts
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- INGESTION STATS -->
+
+        <section class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-kicker">02 / TELEMETRY</div>
+                    <h2>Ingestion Telemetry</h2>
+                </div>
+
+                <div class="live-indicator">
+                    <span></span>
+                    LIVE DATA
+                </div>
+
+            </div>
+
+
+            <div class="telemetry-grid">
+
+                <div class="telemetry-card featured">
+
+                    <span class="telemetry-label">
+                        JOBS FETCHED
+                    </span>
+
+                    <strong id="jobsFetched">
+                        0
+                    </strong>
+
+                    <div class="telemetry-line">
+                        <span style="width: 72%"></span>
+                    </div>
+
+                </div>
+
+
+                <div class="telemetry-card">
+
+                    <span class="telemetry-label">
+                        INSERTED
+                    </span>
+
+                    <strong id="jobsInserted">
+                        0
+                    </strong>
+
+                    <small>new records</small>
+
+                </div>
+
+
+                <div class="telemetry-card">
+
+                    <span class="telemetry-label">
+                        DUPLICATES
+                    </span>
+
+                    <strong id="jobsSkipped">
+                        0
+                    </strong>
+
+                    <small>prevented</small>
+
+                </div>
+
+
+                <div class="telemetry-card">
+
+                    <span class="telemetry-label">
+                        PROCESSED
+                    </span>
+
+                    <strong id="jobsTotal">
+                        0
+                    </strong>
+
+                    <small>total records</small>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- RECENT JOBS -->
+
+        <section class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-kicker">03 / DATA</div>
+                    <h2>Recent Jobs</h2>
+                </div>
+
+                <button
+                    class="text-button"
+                    onclick="loadJobs()"
+                >
+                    REFRESH ↻
+                </button>
+
+            </div>
+
+
+            <div
+                id="jobsContainer"
+                class="jobs-grid"
+            >
+                <div class="loading-state">
+                    Loading live job data...
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- INGESTION HISTORY -->
+
+        <section class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="section-kicker">04 / OBSERVABILITY</div>
+                    <h2>Ingestion History</h2>
+                </div>
+
+            </div>
+
+
+            <div
+                id="logsContainer"
+                class="logs-wrapper"
+            >
+                <div class="loading-state">
+                    Loading ingestion history...
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- RESILIENCE -->
+
+        <section class="resilience-banner">
+
+            <div class="resilience-copy">
+
+                <div class="section-kicker">
+                    RESILIENCE ENGINE
+                </div>
+
+                <h2>
+                    When a source fails,
+                    <span>JobFlow keeps moving.</span>
+                </h2>
+
+                <p>
+                    Primary-source failure triggers the controlled
+                    fallback path instead of silently breaking the
+                    ingestion pipeline.
+                </p>
+
+            </div>
+
+            <div class="resilience-flow">
+
+                <div class="flow-step">
+                    <span>01</span>
+                    DETECT
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-step">
+                    <span>02</span>
+                    RETRY
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-step active">
+                    <span>03</span>
+                    FALLBACK
+                </div>
+
+                <div class="flow-arrow">→</div>
+
+                <div class="flow-step">
+                    <span>04</span>
+                    RECOVER
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer class="footer">
+
+        <div class="footer-brand">
+            JOBFLOW
+        </div>
+
+        <div>
+            Resilient Job Ingestion Pipeline
+        </div>
+
+        <div>
+            v1.0.0
+        </div>
+
+    </footer>
+
+
+    <div
+        id="toast"
+        class="toast"
+    >
+        <span class="toast-icon">✓</span>
+        <span id="toastMessage">Done</span>
+    </div>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
