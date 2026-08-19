@@ -95,9 +95,11 @@ If a source explicitly prohibited the intended automated access through its appl
 
 AI assistance was used during development for brainstorming, debugging, implementation guidance, code structure, and improving the frontend presentation.
 
-However, the resulting application was personally tested and verified through local execution and automated tests.
+I did not treat AI-generated code as automatically correct. I personally ran the application locally, reviewed the generated implementation, ran the automated tests, and manually tested the main API workflows.
 
-The main workflows were manually demonstrated, including:
+During deployment, I also inspected actual runtime errors from Render and changed the implementation based on those errors. For example, I corrected the `save_jobs()` call when the production traceback showed that the `source` and `fallback_used` arguments were missing, and I implemented a controlled `/test-fallback` endpoint to verify the primary-to-fallback recovery path.
+
+The main workflows were manually verified, including:
 
 - Normal Jobicy ingestion
 - Duplicate detection
@@ -105,10 +107,10 @@ The main workflows were manually demonstrated, including:
 - Job retrieval
 - Primary-source failure handling
 - Remotive fallback
+- Production deployment
 
-The API was also tested using pytest.
+The final pytest run passed all eight automated tests.
 
-The final test run passed all eight automated tests.
 
 ## 8. Verification
 
