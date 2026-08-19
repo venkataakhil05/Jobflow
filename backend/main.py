@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, Depends
@@ -72,6 +73,63 @@ async def ingest(
         "fallback_used": ingestion_result["fallback_used"],
         **result
     }
+
+
+@app.post("/test-fallback")
+async def test_fallback(
+    db: Session = Depends(get_db)
+):
+    """
+    Run a controlled fallback test.
+
+    Jobicy is deliberately forced to fail.
+    The existing ingestion pipeline then
+    switches to Remotive.
+    """
+
+    previous_value = os.environ.get(
+        "SIMULATE_PRIMARY_FAILURE"
+    )
+
+    try:
+
+        # Force Jobicy to fail.
+        os.environ[
+            "SIMULATE_PRIMARY_FAILURE"
+        ] = "true"
+
+        ingestion_result = await ingest_jobs(5)
+
+        result = save_jobs(
+            db,
+            ingestion_result["jobs"],
+            ingestion_result["source"],
+            ingestion_result["fallback_used"]
+        )
+
+        return {
+            "source": ingestion_result["source"],
+            "fallback_used": ingestion_result[
+                "fallback_used"
+            ],
+            **result
+        }
+
+    finally:
+
+        # Restore the previous environment state.
+        if previous_value is None:
+
+            os.environ.pop(
+                "SIMULATE_PRIMARY_FAILURE",
+                None
+            )
+
+        else:
+
+            os.environ[
+                "SIMULATE_PRIMARY_FAILURE"
+            ] = previous_value
 
 
 @app.get("/jobs")

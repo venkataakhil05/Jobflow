@@ -55,7 +55,9 @@ def normalize_remotive_job(job: dict) -> dict:
         "location": job.get("candidate_required_location"),
         "job_type": job.get("job_type"),
         "url": job.get("url"),
-        "posted_at": parse_date(job.get("publication_date")),
+        "posted_at": parse_date(
+            job.get("publication_date")
+        ),
     }
 
 
@@ -75,24 +77,54 @@ def validate_job(job: dict) -> bool:
 async def ingest_jobs(count: int = 5) -> dict:
     """
     Try Jobicy first.
-    If Jobicy fails, use Remotive as fallback.
+
+    If Jobicy fails, returns no valid jobs,
+    or primary failure simulation is enabled,
+    use Remotive as fallback.
     """
 
     try:
-        if os.getenv("SIMULATE_PRIMARY_FAILURE") == "true":
+
+        # ---------------------------------------------
+        # Controlled primary failure simulation
+        # ---------------------------------------------
+
+        if os.getenv(
+            "SIMULATE_PRIMARY_FAILURE"
+        ) == "true":
+
             raise RuntimeError(
                 "Simulated Jobicy failure for fallback testing"
             )
-        
-        if os.getenv("SIMULATE_EMPTY_PRIMARY") == "true":
+
+        # ---------------------------------------------
+        # Controlled empty-primary simulation
+        # ---------------------------------------------
+
+        if os.getenv(
+            "SIMULATE_EMPTY_PRIMARY"
+        ) == "true":
+
             raw_jobs = []
+
         else:
-            raw_jobs = await fetch_jobicy_jobs(count)
+
+            raw_jobs = await fetch_jobicy_jobs(
+                count
+            )
+
+        # ---------------------------------------------
+        # Normalize Jobicy jobs
+        # ---------------------------------------------
 
         normalized_jobs = [
             normalize_jobicy_job(job)
             for job in raw_jobs
         ]
+
+        # ---------------------------------------------
+        # Validate jobs
+        # ---------------------------------------------
 
         normalized_jobs = [
             job
@@ -100,20 +132,43 @@ async def ingest_jobs(count: int = 5) -> dict:
             if validate_job(job)
         ]
 
+        # ---------------------------------------------
+        # Primary succeeded
+        # ---------------------------------------------
+
         if normalized_jobs:
+
             return {
                 "source": "jobicy",
                 "fallback_used": False,
                 "jobs": normalized_jobs
             }
 
-        raise RuntimeError("Jobicy returned no valid jobs")
+        # ---------------------------------------------
+        # No valid primary jobs
+        # ---------------------------------------------
+
+        raise RuntimeError(
+            "Jobicy returned no valid jobs"
+        )
 
     except Exception as error:
-        print(f"Primary source failed: {error}")
-        print("Switching to Remotive fallback...")
 
-        raw_jobs = await fetch_remotive_jobs(count)
+        print(
+            f"Primary source failed: {error}"
+        )
+
+        print(
+            "Switching to Remotive fallback..."
+        )
+
+        # ---------------------------------------------
+        # Remotive fallback
+        # ---------------------------------------------
+
+        raw_jobs = await fetch_remotive_jobs(
+            count
+        )
 
         normalized_jobs = [
             normalize_remotive_job(job)
@@ -133,9 +188,15 @@ async def ingest_jobs(count: int = 5) -> dict:
         }
 
 
-def save_jobs(db: Session, jobs: list[dict], source: str, fallback_used: bool) -> dict:
+def save_jobs(
+    db: Session,
+    jobs: list[dict],
+    source: str,
+    fallback_used: bool
+) -> dict:
     """
-    Save normalized jobs into SQLite and record the ingestion run.
+    Save normalized jobs into SQLite
+    and record the ingestion run.
     """
 
     inserted = 0
@@ -146,13 +207,16 @@ def save_jobs(db: Session, jobs: list[dict], source: str, fallback_used: bool) -
         existing_job = (
             db.query(Job)
             .filter(
-                Job.source == job_data["source"],
-                Job.external_id == job_data["external_id"]
+                Job.source
+                == job_data["source"],
+                Job.external_id
+                == job_data["external_id"]
             )
             .first()
         )
 
         if existing_job:
+
             skipped += 1
             continue
 
@@ -161,12 +225,20 @@ def save_jobs(db: Session, jobs: list[dict], source: str, fallback_used: bool) -
         db.add(job)
 
         try:
+
             db.commit()
+
             inserted += 1
 
         except IntegrityError:
+
             db.rollback()
+
             skipped += 1
+
+    # ---------------------------------------------
+    # Record ingestion history
+    # ---------------------------------------------
 
     log = IngestionLog(
         source=source,
@@ -178,6 +250,7 @@ def save_jobs(db: Session, jobs: list[dict], source: str, fallback_used: bool) -
     )
 
     db.add(log)
+
     db.commit()
 
     return {
