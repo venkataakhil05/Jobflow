@@ -1,8 +1,7 @@
 from pathlib import Path
 
 from fastapi import FastAPI, Depends
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from .database import Base, engine, get_db
@@ -37,8 +36,15 @@ app = FastAPI(
 
 
 # ---------------------------------------------------------
-# API Routes
+# API ROUTES
 # ---------------------------------------------------------
+
+@app.get("/")
+def root():
+    return FileResponse(
+        FRONTEND_DIR / "index.html"
+    )
+
 
 @app.get("/health")
 def health():
@@ -48,7 +54,9 @@ def health():
 
 
 @app.post("/ingest")
-async def ingest(db: Session = Depends(get_db)):
+async def ingest(
+    db: Session = Depends(get_db)
+):
 
     ingestion_result = await ingest_jobs(5)
 
@@ -65,7 +73,9 @@ async def ingest(db: Session = Depends(get_db)):
 
 
 @app.get("/jobs")
-def get_jobs(db: Session = Depends(get_db)):
+def get_jobs(
+    db: Session = Depends(get_db)
+):
 
     jobs = db.query(Job).all()
 
@@ -79,7 +89,9 @@ def get_ingestion_logs(
 
     logs = (
         db.query(IngestionLog)
-        .order_by(IngestionLog.created_at.desc())
+        .order_by(
+            IngestionLog.created_at.desc()
+        )
         .all()
     )
 
@@ -87,23 +99,30 @@ def get_ingestion_logs(
 
 
 # ---------------------------------------------------------
-# Frontend
+# FRONTEND FILES
 # ---------------------------------------------------------
 
-@app.get("/", include_in_schema=False)
-def serve_frontend():
+@app.get("/style.css")
+def serve_css():
 
-    return FileResponse(
-        FRONTEND_DIR / "index.html"
+    return Response(
+        content=(
+            FRONTEND_DIR / "style.css"
+        ).read_text(
+            encoding="utf-8"
+        ),
+        media_type="text/css"
     )
 
 
-# Serve CSS, JavaScript and other frontend files
-app.mount(
-    "/",
-    StaticFiles(
-        directory=FRONTEND_DIR,
-        html=True
-    ),
-    name="frontend"
-)
+@app.get("/app.js")
+def serve_javascript():
+
+    return Response(
+        content=(
+            FRONTEND_DIR / "app.js"
+        ).read_text(
+            encoding="utf-8"
+        ),
+        media_type="application/javascript"
+    )
