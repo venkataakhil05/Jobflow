@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "";
 
 
 /* =================================
@@ -6,7 +6,6 @@ const API_URL = "http://127.0.0.1:8000";
 ================================= */
 
 function escapeHtml(value) {
-
     if (
         value === null ||
         value === undefined
@@ -24,7 +23,6 @@ function escapeHtml(value) {
 
 
 function formatDate(value) {
-
     if (!value) {
         return "—";
     }
@@ -34,12 +32,15 @@ function formatDate(value) {
 
 
 function showToast(message) {
-
     const toast =
         document.getElementById("toast");
 
     const toastMessage =
         document.getElementById("toastMessage");
+
+    if (!toast || !toastMessage) {
+        return;
+    }
 
     toastMessage.textContent = message;
 
@@ -56,7 +57,6 @@ function showToast(message) {
 ================================= */
 
 async function checkHealth() {
-
     const status =
         document.getElementById("apiStatus");
 
@@ -70,7 +70,6 @@ async function checkHealth() {
         document.getElementById("topStatus");
 
     try {
-
         const response =
             await fetch(`${API_URL}/health`);
 
@@ -175,7 +174,15 @@ async function loadJobs() {
             jobs.slice(-10).reverse();
 
         container.innerHTML =
-            visibleJobs.map(job => `
+            visibleJobs.map(job => {
+
+                let jobType = job.job_type;
+
+                if (Array.isArray(jobType)) {
+                    jobType = jobType.join(", ");
+                }
+
+                return `
 
                 <article class="job-card">
 
@@ -211,7 +218,7 @@ async function loadJobs() {
 
                         <span class="job-detail">
                             ${escapeHtml(
-                                job.job_type ||
+                                jobType ||
                                 "Type not specified"
                             )}
                         </span>
@@ -230,7 +237,9 @@ async function loadJobs() {
 
                 </article>
 
-            `).join("");
+            `;
+
+            }).join("");
 
     } catch (error) {
 
@@ -356,6 +365,7 @@ async function loadLogs() {
                             </tr>
 
                         `;
+
                     }).join("")}
 
                 </tbody>

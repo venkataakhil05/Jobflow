@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI, Depends
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from .database import Base, engine, get_db
@@ -7,11 +10,25 @@ from .models import Job, IngestionLog
 from .services.ingestion import ingest_jobs, save_jobs
 
 
-# Create database tables
+# ---------------------------------------------------------
+# Paths
+# ---------------------------------------------------------
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+
+# ---------------------------------------------------------
+# Database
+# ---------------------------------------------------------
+
 Base.metadata.create_all(bind=engine)
 
 
-# Create FastAPI application
+# ---------------------------------------------------------
+# FastAPI application
+# ---------------------------------------------------------
+
 app = FastAPI(
     title="JobFlow API",
     description="Resilient job ingestion pipeline",
@@ -19,24 +36,9 @@ app = FastAPI(
 )
 
 
-# Enable CORS for local frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-@app.get("/")
-def root():
-    return {
-        "name": "JobFlow",
-        "status": "running",
-        "message": "Job ingestion API is running"
-    }
-
+# ---------------------------------------------------------
+# API Routes
+# ---------------------------------------------------------
 
 @app.get("/health")
 def health():
@@ -46,16 +48,13 @@ def health():
 
 
 @app.post("/ingest")
-async def ingest(
-    db: Session = Depends(get_db)
-):
+async def ingest(db: Session = Depends(get_db)):
+
     ingestion_result = await ingest_jobs(5)
 
     result = save_jobs(
         db,
-        ingestion_result["jobs"],
-        ingestion_result["source"],
-        ingestion_result["fallback_used"]
+        ingestion_result["jobs"]
     )
 
     return {
@@ -65,66 +64,10 @@ async def ingest(
     }
 
 
-@app.post("/test-fallback")
-async def test_fallback(
-    db: Session = Depends(get_db)
-):
-    """
-    Controlled local test of the fallback mechanism.
-
-    This temporarily simulates a primary Jobicy
-    failure and verifies that Remotive is used.
-    """
-
-    import os
-
-    previous_value = os.environ.get(
-        "SIMULATE_PRIMARY_FAILURE"
-    )
-
-    os.environ["SIMULATE_PRIMARY_FAILURE"] = "true"
-
-    try:
-
-        ingestion_result = await ingest_jobs(5)
-
-        result = save_jobs(
-            db,
-            ingestion_result["jobs"],
-            ingestion_result["source"],
-            ingestion_result["fallback_used"]
-        )
-
-        return {
-            "source": ingestion_result["source"],
-            "fallback_used": ingestion_result["fallback_used"],
-            **result
-        }
-
-    finally:
-
-        if previous_value is None:
-
-            os.environ.pop(
-                "SIMULATE_PRIMARY_FAILURE",
-                None
-            )
-
-        else:
-
-            os.environ[
-                "SIMULATE_PRIMARY_FAILURE"
-            ] = previous_value
-
-
 @app.get("/jobs")
-def get_jobs(
-    db: Session = Depends(get_db)
-):
-    jobs = (
-        db.query(Job)
-        .all()
-    )
+def get_jobs(db: Session = Depends(get_db)):
+
+    jobs = db.query(Job).all()
 
     return jobs
 
@@ -133,12 +76,34 @@ def get_jobs(
 def get_ingestion_logs(
     db: Session = Depends(get_db)
 ):
+
     logs = (
         db.query(IngestionLog)
-        .order_by(
-            IngestionLog.id.desc()
-        )
+        .order_by(IngestionLog.created_at.desc())
         .all()
     )
 
     return logs
+
+
+# ---------------------------------------------------------
+# Frontend
+# ---------------------------------------------------------
+
+@app.get("/", include_in_schema=False)
+def serve_frontend():
+
+    return FileResponse(
+        FRONTEND_DIR / "index.html"
+    )
+
+
+# Serve CSS, JavaScript and other frontend files
+app.mount(
+    "/",
+    StaticFiles(
+        directory=FRONTEND_DIR,
+        html=True
+    ),
+    name="frontend"
+)
